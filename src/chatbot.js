@@ -8,19 +8,26 @@ const Chatbot = () => {
     // For voice recognition
     const { transcript, resetTranscript } = useSpeechRecognition();
 
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (userInput || transcript) {
             const message = userInput || transcript;
             setMessages([...messages, { text: message, sender: 'user' }]);
-            generateBotResponse(message);
-            setUserInput('');
-        }
-    };
 
-    const generateBotResponse = (message) => {
-        // Mock response for the bot
-        const botMessage = `You asked: "${message}". Here is some information: ...`;
-        setMessages([...messages, { text: botMessage, sender: 'bot' }]);
+            // Make API call to Flask backend
+            const response = await fetch('http://127.0.0.1:5000/query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ query: message }),
+            });
+            const data = await response.json();
+            const botMessage = data.response;
+
+            // Update bot's response in the chat
+            setMessages([...messages, { text: botMessage, sender: 'bot' }]);
+            setUserInput(''); // Clear input field
+        }
     };
 
     const handleVoiceRecognition = () => {
